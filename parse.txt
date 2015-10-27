@@ -26,6 +26,7 @@ for line in fh:
    print " Status code value : %s" % (code)
  
 FROM WEB
+
 import fileinput
 import re
 import os
@@ -79,7 +80,8 @@ def toJson(file):
 
 print toJson("access.log")
 
-My Parser
+MY PARSER
+
 try: import simplejson as json
 except ImportError: import json
 
@@ -106,3 +108,58 @@ print json.JSONEncoder().encode(listOfDict)
 
 with open('data.json', 'w') as outfile:
 	json.dump(listOfDict, outfile)
+
+
+LOG PARSER
+import sys
+import os
+try: import simplejson as json
+except ImportError: import json
+
+#function to read log file and return a list of Dictionary Objects
+def readFile(inputfile):
+    	listOfDicts = []
+	fh = open(inputfile, "r").readlines()
+	for line in fh:
+		if line != "\n":
+			listOfDicts.append(lineToDict(line))
+
+	return listOfDicts		
+
+#function to convert a line from log file into a Dictionary object and return the Dictionary Object
+def lineToDict(line):
+	dictObj = {}
+	dictObj['host'] = line.split(" ")[0]
+	dictObj['identity'] = line.split(" ")[1]
+	dictObj['user'] = line.split(" ")[2]
+	dictObj['time'] = " ".join(line.split(" ")[3:5])
+	dictObj['request'] = "".join(" ".join(line.split(" ")[5:8]).split("\""))
+	dictObj['status'] = line.split(" ")[8]
+	dictObj['size'] = line.split(" ")[9]
+	dictObj['referer'] = "".join((line.split(" ")[10]).split("\""))
+	dictObj['useragent'] = "".join("".join(" ".join(line.split(" ")[11:]).split("\"")).split("\n"))
+	
+	return dictObj
+
+#function to convert the entire Log file into JSON Object format and store the output into a JSON output file
+def parseLogToJSON():
+	if len(sys.argv) < 2 or len(sys.argv) > 2:
+		print "Incorrect Syntax. Usage: python LogParser.py <filename>"
+		sys.exit(2)
+	elif os.path.isfile(sys.argv[1]) == False:
+		print "File " + "\"" + sys.argv[1] + "\"" + " does not exist."
+		sys.exit(2)
+
+	dictObjs = readFile(sys.argv[1])
+	
+	print "\nThe Parser Output in dictionary format is:\n"
+	print dictObjs
+	
+	with open('output.json', 'w') as outfile:
+		json.dump(dictObjs, outfile)
+	
+	print "\nThe Parser Output in JSON format has been stored in the \"output.json\" file.\n"
+			
+
+#call the main function to parse logs and convert to JSON format 
+parseLogToJSON()
