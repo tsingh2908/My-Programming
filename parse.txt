@@ -1,0 +1,108 @@
+Count the number of hits in a Apache/Nginx
+
+ips = {}
+
+fh = open(“/var/log/nginx/access.log”, “r”).readlines()
+for line in fh:
+	ip=line.split(“ “)[0]
+	if 6<len(ip)<=15:
+		ips[ip]=ips.get(ip, 0) + 1;
+print ips
+
+
+
+GENERAL SCRIPT TO GET DETAILS FROM LOG FILE
+
+ips={}
+
+
+fh=open("/Users/navjotsingh/Desktop/Log test.rtf","r").readlines()
+for line in fh:
+   ip=line.split(" ")[0]
+   url=" ".join(line.split(" ")[5:8])
+   code="".join(line.split(" ")[8:9])
+   print " IP Address is : %s" %(ip) 
+   print " URL value is : %s" % (url)
+   print " Status code value : %s" % (code)
+ 
+FROM WEB
+import fileinput
+import re
+import os
+try: import simplejson as json
+except ImportError: import json
+
+#read input file and return entries' Dict Object
+def readfile(file):
+    filecontent = {}
+    index = 0
+    #check necessary file size checking
+    statinfo = os.stat(file)
+
+    #just a guestimate. I believe a single entry contains atleast 150 chars
+    if statinfo.st_size < 150:
+        print "Not a valid access_log file. It does not have enough data"
+    else:
+        for line in fileinput.input(file):
+            index = index+1
+            if line != "\n": #don't read newlines
+                filecontent[index] = line2dict(line)
+
+        fileinput.close()
+    return filecontent
+
+#gets a line of string from Log and convert it into Dict Object
+def line2dict(line):
+    #Snippet, thanks to http://www.seehuhn.de/blog/52
+    parts = [
+    r'(?P<HOST>\S+)',                   # host %h
+    r'(?P<IDENTITY>\S+)',               # indent %l (unused)
+    r'(?P<USER>\S+)',                   # user %u
+    r'\[(?P<TIME>.+)\]',                # time %t
+    r'"(?P<REQUEST>.+)"',               # request "%r"
+    r'(?P<STATUS>[0-9]+)',              # status %>s
+    r'(?P<SIZE>\S+)',                   # size %b (careful, can be '-')
+    r'"(?P<REFERER>.*)"',               # referer "%{Referer}i"
+    r'"(?P<USERAGENT>.*)"',             # user agent "%{User-agent}i"
+]
+    pattern = re.compile(r'\s+'.join(parts)+r'\s*\Z')
+    m = pattern.match(line)
+    res = m.groupdict()
+    return res
+
+#to get jSon of entire Log
+#returns JSON object
+def toJson(file):
+    #get dict object for each entry
+    entries = readfile(file)
+    return json.JSONEncoder().encode(entries)
+
+print toJson("access.log")
+
+My Parser
+try: import simplejson as json
+except ImportError: import json
+
+listOfDict =[]
+
+fh = open("access.log", "r").readlines()
+for line in fh:
+    ips = {}
+    ips['host'] = line.split(" ")[0]
+    ips['identity'] = line.split(" ")[1]
+    ips['user'] = line.split(" ")[2]
+    ips['time'] = " ".join(line.split(" ")[3:5])
+    ips['request'] = " ".join(" ".join(line.split(" ")[5:8]).split("\""))
+    ips['status'] = line.split(" ")[8]
+    ips['size'] = "".join(line.split(" ")[9].split("\n"))	
+    
+    listOfDict.append(ips)
+ 		
+print "list of Dictionary Objects: "
+print listOfDict
+
+print "JSON Output: "
+print json.JSONEncoder().encode(listOfDict)
+
+with open('data.json', 'w') as outfile:
+	json.dump(listOfDict, outfile)
